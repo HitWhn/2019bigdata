@@ -44,9 +44,5 @@ for filename in os.listdir(r'E:\2019bigData\2019bigdata\train_visit\new'):
 # print(np.array(l1).sum())
 # l4=[2,4,6]
 # print(np.array(l4)/2)
-l=[1]
-ll=[2]
-l.extend(ll)
-print(l)
-l.append(3)
-print(l)
+l=[1,2,3,4]
+print(np.array(l)/4)

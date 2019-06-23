@@ -149,29 +149,51 @@ def cal_total_hours(hour):
     elif total<=24:
         return 4
 
+def check_special_day(day):
+    #【十月一号、十月七号、十月1-7号、平安夜、圣诞节、元旦第一天、第二天、第三天、
+    # 小年、28、29、除夕、初一到初七、初七、情人节、正月十五、妇女节】
+    dic = {'20181001':[0,2],'20181002':[2],'20181003':[2],'20181004':[2],'20181005':[2],'20181006':[2],'20181007':[1,2],
+           '20181224':[3],'20181225':[4],'20181230':[5],'20181231':[6],'20190101':[7],'20190128':[8],'20190202':[9],
+           '20190203':[10],'20190204':[11],'20190205':[12],'20190206':[12],'20190207':[12],'20190208':[12],
+           '20190209':[12],'20190210':[12],'20190211':[12,13],'20190214':[14],'20190219':[15],'20190308':[16]}
+    if day in dic:
+        return dic[day]
+    else:
+        return []
+
 def count_MonthDayHours(date_of_perrecord,time_of_perrecord):
     weak=[0]*7
     month=[0]*12
     day_or_night=[0]*6
     total_hours=[0]*5
-    count_visit=[]
-    for date,time in zip(date_of_perrecord,time_of_perrecord):
-        count_visit.append(len(date))
-        for day,hours in zip(date,time):
-            y,m,d=change_date(day)
-            weak[int(datetime.datetime(y,m,d).strftime("%w"))]+=1
-            month[m-1]+=1
-            hour=hours.split('|')
-            dorn=check_dorn(hour)
-            for rs in dorn:
-                day_or_night[rs]+=1
-            th=cal_total_hours(hour)
-            total_hours[th]+=1
-    mean=np.mean(count_visit)
-    quantile_array = []
-    for i in [10, 25, 50, 75, 90]:
-        quantile_array.append(round(np.percentile(count_visit, i), 2))
-    return weak,month,day_or_night,total_hours,mean,quantile_array
+    special_day=[0]*17
+    count_visit=0
+    # for date,time in zip(date_of_perrecord,time_of_perrecord):
+    #     count_visit.append(len(date))
+    #     for day,hours in zip(date,time):
+    #         y,m,d=change_date(day)
+    #         weak[int(datetime.datetime(y,m,d).strftime("%w"))]+=1
+    #         month[m-1]+=1
+    #         hour=hours.split('|')
+    #         dorn=check_dorn(hour)
+    #         for rs in dorn:
+    #             day_or_night[rs]+=1
+    #         th=cal_total_hours(hour)
+    #         total_hours[th]+=1
+    # mean=np.mean(count_visit)
+    # quantile_array = []
+    # for i in [10, 25, 50, 75, 90]:
+    #     quantile_array.append(round(np.percentile(count_visit, i), 2))
+    # return weak,month,day_or_night,total_hours,mean,quantile_array
+    for date in date_of_perrecord:
+        count_visit+=len(date)
+        for day in date:
+            sp_day=check_special_day(day)
+            if len(sp_day)!=0:
+                for rs in sp_day:
+                    special_day[rs]+=1
+    return list(np.around(np.array(special_day)/count_visit,decimals=4))
+
 
 def ToRatio(feature):
     return list(np.around((np.array(feature)/np.array(feature).sum()),decimals=2))
@@ -188,76 +210,87 @@ def getFeatures(path,features):
     all_records, date_of_perrecord, time_of_perrecord = collect_all_records(user_behavior)
     #print(all_records,date_of_perrecord,time_of_perrecord,sep='\n')
 
-    visit_interval_of_perrecord = cal_visit_interval(date_of_perrecord)  # 每人每对相邻到访记录的时间间隔
-    #print(visit_interval_of_perrecord)
+    # visit_interval_of_perrecord = cal_visit_interval(date_of_perrecord)  # 每人每对相邻到访记录的时间间隔
+    # #print(visit_interval_of_perrecord)
+    #
+    # feature1, feature2 = cal_closest_interval(visit_interval_of_perrecord)
+    # # 这两个分别是最短间隔，及其所占所有记录的比例
+    # # print(feature1,feature2)
+    # features.append(feature1)
+    # features.append(feature2)
+    #
+    # mean_interval_of_perrecord, var_interval_of_perrecord = cal_MeanAndVar_of_interval(visit_interval_of_perrecord)
+    # # 计算每人每对相邻访客记录的时间间隔的均值和方差
+    # # print(mean_interval_of_perrecord,var_interval_of_perrecord,sep='\n')
+    #
+    # feature3, feature4_8 = cal_MeanQuantile_of_interval(mean_interval_of_perrecord)  # （每人每对相邻到访记录的时间间隔的均值）的均值，以及分位数
+    # # print(feature3,feature4_8)
+    # features.append(feature3)
+    # features.extend(feature4_8)
+    #
+    # feature9, feature10_14 = cal_VarQuantile_of_interval(var_interval_of_perrecord)  # （每人每对相邻到访记录的时间间隔的方差）的均值，以及分位数
+    # # print(feature9,feature10_14)
+    # features.append(feature9)
+    # features.extend(feature10_14)
+    #
+    # visit_time_of_perrecord = cal_visit_time(time_of_perrecord)  # 每人每次的到访时间时长
+    # # print(visit_time_of_perrecord)
+    #
+    # mean_visitTime_of_perrecord, var_visitTime_of_perrecord = cal_MeanAndVar_of_visitTime(
+    #     visit_time_of_perrecord)  # 每人每次到访时间的均值和方差
+    # # print(mean_visitTime_of_perrecord,var_visitTime_of_perrecord,sep='\n')
+    #
+    # feature15, feature16_20 = cal_MeanQuantile_of_time(mean_visitTime_of_perrecord)  # （每人每次到访时间的均值）的均值和分位数
+    # # print(feature15,feature16_20)
+    # features.append(feature15)
+    # features.extend(feature16_20)
+    #
+    # feature21, feature22_26 = cal_VarQuantile_of_time(var_visitTime_of_perrecord)  # （每人每次到访时间的方差）的均值和分位数
+    # # print(feature21,feature22_26)
+    # features.append(feature21)
+    # features.extend(feature22_26)
 
-    feature1, feature2 = cal_closest_interval(visit_interval_of_perrecord)
-    # 这两个分别是最短间隔，及其所占所有记录的比例
-    # print(feature1,feature2)
-    features.append(feature1)
-    features.append(feature2)
-
-    mean_interval_of_perrecord, var_interval_of_perrecord = cal_MeanAndVar_of_interval(visit_interval_of_perrecord)
-    # 计算每人每对相邻访客记录的时间间隔的均值和方差
-    # print(mean_interval_of_perrecord,var_interval_of_perrecord,sep='\n')
-
-    feature3, feature4_8 = cal_MeanQuantile_of_interval(mean_interval_of_perrecord)  # （每人每对相邻到访记录的时间间隔的均值）的均值，以及分位数
-    # print(feature3,feature4_8)
-    features.append(feature3)
-    features.extend(feature4_8)
-
-    feature9, feature10_14 = cal_VarQuantile_of_interval(var_interval_of_perrecord)  # （每人每对相邻到访记录的时间间隔的方差）的均值，以及分位数
-    # print(feature9,feature10_14)
-    features.append(feature9)
-    features.extend(feature10_14)
-
-    visit_time_of_perrecord = cal_visit_time(time_of_perrecord)  # 每人每次的到访时间时长
-    # print(visit_time_of_perrecord)
-
-    mean_visitTime_of_perrecord, var_visitTime_of_perrecord = cal_MeanAndVar_of_visitTime(
-        visit_time_of_perrecord)  # 每人每次到访时间的均值和方差
-    # print(mean_visitTime_of_perrecord,var_visitTime_of_perrecord,sep='\n')
-
-    feature15, feature16_20 = cal_MeanQuantile_of_time(mean_visitTime_of_perrecord)  # （每人每次到访时间的均值）的均值和分位数
-    # print(feature15,feature16_20)
-    features.append(feature15)
-    features.extend(feature16_20)
-
-    feature21, feature22_26 = cal_VarQuantile_of_time(var_visitTime_of_perrecord)  # （每人每次到访时间的方差）的均值和分位数
-    # print(feature21,feature22_26)
-    features.append(feature21)
-    features.extend(feature22_26)
-
-    feature27_33, feature34_45, feature46_51, feature52_56, feature57, feature58_62 = count_MonthDayHours(
-        date_of_perrecord, time_of_perrecord)
-
-    feature27_33 = ToRatio(feature27_33)
-    feature34_45 = ToRatio(feature34_45)
-    feature46_51 = ToRatio(feature46_51)
-    feature52_56 = ToRatio(feature52_56)
-    # print(feature27_33,feature34_45,feature46_51,feature52_56,feature57,feature58_62,sep='\n')
-    features.extend(feature27_33)
-    features.extend(feature34_45)
-    features.extend(feature46_51)
-    features.extend(feature52_56)
-    features.append(feature57)
-    features.extend(feature58_62)
+    # feature27_33, feature34_45, feature46_51, feature52_56, feature57, feature58_62 = count_MonthDayHours(
+    #     date_of_perrecord, time_of_perrecord)
+    #
+    # feature27_33 = ToRatio(feature27_33)
+    # feature34_45 = ToRatio(feature34_45)
+    # feature46_51 = ToRatio(feature46_51)
+    # feature52_56 = ToRatio(feature52_56)
+    # # print(feature27_33,feature34_45,feature46_51,feature52_56,feature57,feature58_62,sep='\n')
+    # features.extend(feature27_33)
+    # features.extend(feature34_45)
+    # features.extend(feature46_51)
+    # features.extend(feature52_56)
+    # features.append(feature57)
+    # features.extend(feature58_62)
+    feature63_79=count_MonthDayHours(date_of_perrecord,time_of_perrecord)
+    features.extend(feature63_79)
     #print(features)
     #print(len(features))
     #print('--------------------------------------------------')
     return features
 
+# if __name__=='__main__':
+#     train_features=[]
+#     for filename in tqdm.tqdm(os.listdir(r'E:\2019bigData\2019bigdata\train_visit\train')):
+#         path = 'E:/2019bigData/2019bigdata/train_visit/train/' + filename
+#         feature_of_pertxt = []  # 每个文件提取的特征集合
+#         category = int(filename[9])  # target目标特征
+#         feature_of_pertxt.append(category)
+#         train_features.append(getFeatures(path,feature_of_pertxt))
+#     dt=pd.DataFrame(train_features)
+#     #print(dt)
+#     dt.to_csv(r'E:\2019bigData\2019bigdata\train_visit_set.csv',index=False)
 if __name__=='__main__':
     train_features=[]
     for filename in tqdm.tqdm(os.listdir(r'E:\2019bigData\2019bigdata\train_visit\train')):
         path = 'E:/2019bigData/2019bigdata/train_visit/train/' + filename
         feature_of_pertxt = []  # 每个文件提取的特征集合
-        category = int(filename[9])  # target目标特征
-        feature_of_pertxt.append(category)
         train_features.append(getFeatures(path,feature_of_pertxt))
     dt=pd.DataFrame(train_features)
     #print(dt)
-    dt.to_csv(r'E:\2019bigData\2019bigdata\train_visit_set.csv')
+    dt.to_csv(r'E:\2019bigData\2019bigdata\train_visit_new_set.csv',index=False)
 
 
 
